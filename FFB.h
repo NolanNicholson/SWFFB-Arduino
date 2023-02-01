@@ -23,21 +23,15 @@ void SidewinderFFBProInitPulses(int count)
   while (count--)
   {
     //X1_pull();
-    do
-    {
-      clr_bit(TRGDDR, TRGX1BIT);
-      clr_bit(TRGDDR, TRGY2BIT);
-    } while (0);
+    clr_bit(TRGDDR, TRGX1BIT);
+    clr_bit(TRGDDR, TRGY2BIT);
 
     //digitalWrite(PIN_X1, HIGH);
     delayMicroseconds(50);
 
     //X1_rel();
-    do
-    {
-      set_bit(TRGDDR, TRGX1BIT);
-      set_bit(TRGDDR, TRGY2BIT);
-    } while (0);
+    set_bit(TRGDDR, TRGX1BIT);
+    set_bit(TRGDDR, TRGY2BIT);
 
     //digitalWrite(PIN_X1, LOW);
     delayMicroseconds(170);
