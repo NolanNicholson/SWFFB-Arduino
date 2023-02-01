@@ -8,16 +8,17 @@
 
 void setup()
 {
-  initLog();  
+  initLog();
 
-  // Set up trigger pin as an output
-  pinMode(PIN_X1, OUTPUT);
+  set_bit(TRGDDR, TRGX1BIT);
+  set_bit(TRGDDR, TRGY2BIT);
 
   // Set up Arduino's TX line for MIDI communications.
   // (RX is not used by the Sidewinder.)
-  log("Setting Serial1 up for MIDI data");
   Serial1.begin(31250, SERIAL_8N1);
   while(!Serial1);
+
+  delay(2000);
 
   FFBInit();
 }

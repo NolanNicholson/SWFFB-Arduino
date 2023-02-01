@@ -2,12 +2,19 @@
 
 #include "Logging.h"
 
-#define PIN_X1 A0
+#define PIN_X1 A8
 
+// low-level stuff from adapt-ffb-joy
+#define TRGDDR DDRB
+#define TRGX1BIT DDB4
+#define TRGY2BIT DDB5
+#define set_bit( sfr, bit )	(_SFR_BYTE(sfr) |=  _BV(bit))
+#define clr_bit( sfr, bit )	(_SFR_BYTE(sfr) &= ~_BV(bit))
 
 void cooldown()
 {
-  digitalWrite(PIN_X1, LOW);
+  set_bit(TRGDDR, TRGX1BIT);
+  set_bit(TRGDDR, TRGY2BIT);
   delayMicroseconds(1000);
 }
 
@@ -15,10 +22,25 @@ void SidewinderFFBProInitPulses(int count)
 {
   while (count--)
   {
-    digitalWrite(PIN_X1, HIGH);
+    //X1_pull();
+    do
+    {
+      clr_bit(TRGDDR, TRGX1BIT);
+      clr_bit(TRGDDR, TRGY2BIT);
+    } while (0);
+
+    //digitalWrite(PIN_X1, HIGH);
     delayMicroseconds(50);
-    digitalWrite(PIN_X1, LOW);
-    delayMicroseconds(150);
+
+    //X1_rel();
+    do
+    {
+      set_bit(TRGDDR, TRGX1BIT);
+      set_bit(TRGDDR, TRGY2BIT);
+    } while (0);
+
+    //digitalWrite(PIN_X1, LOW);
+    delayMicroseconds(170);
   }
 }
 
@@ -48,7 +70,7 @@ void FFBInitEnableFFBMode()
   const int handshake_pulses[] = {   1,   4,   3,   2,   2,   3,   2 };
 
   // Transmit "handshake", to prepare the joystick to receive MIDI data.
-  log("FFB init: Performing pre-MIDI handshake...");
+  //log("FFB init: Performing pre-MIDI handshake...");
 
   cooldown();
 
@@ -103,7 +125,6 @@ void FFBInitStartupMidi()
   };
 
   // Send MIDI data.
-  log("FFB init: Sending startup MIDI data...");
 
   Serial1.write(startupFfbData_0, sizeof(startupFfbData_0));	// Program change
   delay(20);
@@ -116,13 +137,10 @@ void FFBInitStartupMidi()
 
 void FFBInit()
 {
-
   FFBInitEnableFFBMode();
   FFBInitStartupMidi();
 
   // Disable auto-center effect.
-  log("FFB init: Disabling auto-center...");
-
   SidewinderFFBProSetAutoCenter(false);
   delay(70);
 }
