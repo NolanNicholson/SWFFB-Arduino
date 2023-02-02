@@ -6,6 +6,14 @@
 DigitalOutput<A8> m_triggerX;
 DigitalOutput<A9> m_triggerY;
 
+void WaitMs(int ms)
+{
+  while(ms--)
+  {
+    delayMicroseconds(1000);
+  }
+}
+
 void cooldown()
 {
   m_triggerX.setLow();
@@ -44,7 +52,7 @@ void SidewinderFFBProSetAutoCenter(bool enable)
 
   Serial1.write(ac_enable, sizeof(ac_enable));
   if (!enable) {
-    delay(70);
+    delay(69);
     Serial1.write(ac_disable, sizeof(ac_disable));
   }
 }
@@ -52,7 +60,7 @@ void SidewinderFFBProSetAutoCenter(bool enable)
 void FFBInitEnableFFBMode()
 {
   // Magic numbers for initial "handshake"
-  const int handshake_delays[] = { 100,   7,  35,  14,  78,   4,  59 };
+  const int handshake_delays[] = { 100,   7,  41,  10,  78,   4,  59 };
   const int handshake_pulses[] = {   1,   4,   3,   2,   2,   3,   2 };
 
   // Transmit "handshake", to prepare the joystick to receive MIDI data.
@@ -62,7 +70,8 @@ void FFBInitEnableFFBMode()
 
   for (int i = 0; i < 7; i++)
   {
-    delay(handshake_delays[i]);
+    delay(handshake_delays[i]); // in ms; works occasionally
+    //WaitMs(handshake_delays[i]); // invokes delayMicroseconds; never works?
     SidewinderFFBProInitPulses(handshake_pulses[i]);
   }
 }
@@ -113,10 +122,10 @@ void FFBInitStartupMidi()
   // Send MIDI data.
 
   Serial1.write(startupFfbData_0, sizeof(startupFfbData_0));	// Program change
-  delay(20);
+  delayMicroseconds(20000);
 
   Serial1.write(startupFfbData_1, sizeof(startupFfbData_1));	// Init
-  delay(56);
+  delayMicroseconds(56000);
 
   Serial1.write(startupFfbData_2, sizeof(startupFfbData_2));	// Initialize effects data memory
 }
@@ -125,7 +134,6 @@ void FFBInit()
 {
   while (true)
   {
-    // Initialize
     FFBInitEnableFFBMode();
 
     FFBInitStartupMidi();
