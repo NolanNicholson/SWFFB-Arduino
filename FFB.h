@@ -1,39 +1,31 @@
 #pragma once
 
-#include "Logging.h"
+#include "Utilities.h"
+#include "DigitalPin.h"
 
-#define PIN_X1 A8
-
-// low-level stuff from adapt-ffb-joy
-#define TRGDDR DDRB
-#define TRGX1BIT DDB4
-#define TRGY2BIT DDB5
-#define set_bit( sfr, bit )	(_SFR_BYTE(sfr) |=  _BV(bit))
-#define clr_bit( sfr, bit )	(_SFR_BYTE(sfr) &= ~_BV(bit))
+DigitalOutput<A8> m_triggerX;
+DigitalOutput<A9> m_triggerY;
 
 void cooldown()
 {
-  set_bit(TRGDDR, TRGX1BIT);
-  set_bit(TRGDDR, TRGY2BIT);
-  delayMicroseconds(1000);
+  m_triggerX.setLow();
+  m_triggerY.setLow();
+
+  delayMicroseconds(7000);
 }
 
 void SidewinderFFBProInitPulses(int count)
 {
   while (count--)
   {
-    //X1_pull();
-    clr_bit(TRGDDR, TRGX1BIT);
-    clr_bit(TRGDDR, TRGY2BIT);
+    m_triggerX.setHigh();
+    m_triggerY.setHigh();
 
-    //digitalWrite(PIN_X1, HIGH);
     delayMicroseconds(50);
 
-    //X1_rel();
-    set_bit(TRGDDR, TRGX1BIT);
-    set_bit(TRGDDR, TRGY2BIT);
+    m_triggerX.setLow();
+    m_triggerY.setLow();
 
-    //digitalWrite(PIN_X1, LOW);
     delayMicroseconds(170);
   }
 }
@@ -131,10 +123,16 @@ void FFBInitStartupMidi()
 
 void FFBInit()
 {
-  FFBInitEnableFFBMode();
-  FFBInitStartupMidi();
+  while (true)
+  {
+    // Initialize
+    FFBInitEnableFFBMode();
 
-  // Disable auto-center effect.
-  SidewinderFFBProSetAutoCenter(false);
-  delay(70);
+    FFBInitStartupMidi();
+
+    // Disable auto-center effect
+    SidewinderFFBProSetAutoCenter(false);
+
+    delay(2000);
+  }
 }
