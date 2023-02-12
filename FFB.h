@@ -3,8 +3,8 @@
 #include "Utilities.h"
 #include "DigitalPin.h"
 
-DigitalOutput<A8> m_triggerX;
-DigitalOutput<A9> m_triggerY;
+DigitalOutput<A8> m_triggerX1;
+DigitalOutput<A9> m_triggerX2;
 
 #define FFB_EFFECT_CONSTANT 0x12
 #define FFB_EFFECT_SINE     0x02
@@ -19,30 +19,31 @@ void WaitMs(int ms)
 {
   while(ms--)
   {
-    //delayMicroseconds(1000); // never works
-    _delay_ms(1); // works sometimes; requires a compile-time integer constant
+    _delay_ms(1);
+    //delayMicroseconds(1000); // Strangely, _delay_ms(1) works, but delayMicroseconds(1000) does not.
   }
 }
 
 void cooldown()
 {
-  m_triggerX.setLow();
-  m_triggerY.setLow();
+  m_triggerX1.setLow();
+  m_triggerX2.setLow();
 
   delayMicroseconds(7000);
 }
 
 void SidewinderFFBProInitPulses(int count)
 {
+  // Contrary to its documentation (which says sending pulses to just X1 is sufficient)
   while (count--)
   {
-    m_triggerX.setHigh();
-    m_triggerY.setHigh();
+    m_triggerX1.setHigh();
+    m_triggerX2.setHigh();
 
     delayMicroseconds(50);
 
-    m_triggerX.setLow();
-    m_triggerY.setLow();
+    m_triggerX1.setLow();
+    m_triggerX2.setLow();
 
     delayMicroseconds(170);
   }
@@ -67,23 +68,30 @@ void SidewinderFFBProSetAutoCenter(bool enable)
   }
 }
 
+// Transmit "handshake", to prepare the joystick to receive MIDI data.
 void FFBInitEnableFFBMode()
 {
   // Magic numbers for initial "handshake"
   const int handshake_delays[] = { 100,   7,  35,  14,  78,   4,  59 }; // works sometimes (when interrupted?)
   const int handshake_pulses[] = {   1,   4,   3,   2,   2,   3,   2 };
 
-  // Transmit "handshake", to prepare the joystick to receive MIDI data.
-  //log("FFB init: Performing pre-MIDI handshake...");
-
   cooldown();
+
+  // The Sidewinder FFB Pro is very picky about the timings of these pulses.
+  // I haven't found any combination of settings that works 100% reliably to put
+  // the stick in FFB mode, but disabling interrupts and using _delay_ms() seems
+  // to work over 95% of the time.
+
+  noInterrupts();
 
   for (int i = 0; i < 7; i++)
   {
-    delay(handshake_delays[i]); // in ms; works occasionally
-    //WaitMs(handshake_delays[i]);
+    //delay(handshake_delays[i]); // in ms; works sporadically
+    WaitMs(handshake_delays[i]);
     SidewinderFFBProInitPulses(handshake_pulses[i]);
   }
+
+  interrupts();
 }
 
 void FFBInitStartupMidi()
